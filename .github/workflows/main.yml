@@ -1,0 +1,12 @@
+on: [push]
+name: PyInstaller Action
+jobs:
+  pyinstaller-build:
+    runs-on: <windows-latest>
+    steps:
+      - name: Create Executable
+        uses: Martin005/pyinstaller-action@v1.2.0
+        with:
+          spec: 'wiiwheel.py'
+          upload_exe_with_name: 'WiiWheel.exe'
+          options: --onefile,
