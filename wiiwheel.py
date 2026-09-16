@@ -6,6 +6,7 @@ import gspread
 import tkinter as tk
 import math
 import random
+import pygame #pip install pygame-ce
 
 destination = Path(os.getenv('APPDATA')) / "gspread" 
 destination.mkdir(parents=True, exist_ok=True)
@@ -41,15 +42,23 @@ class SpinningWheel:
         # Configuration options
         self.prizes = filteredData
         self.num_segments = len(self.prizes)
-        self.colors = ["#B9B9D9" if i % 2 == 0 else "#CFAFBF" for i in range(len(self.prizes))]
+        slice_colors = []
+        with open("sliceColors.config", "r") as file:
+            slice_colors = [line for line in file.read().splitlines() if line.strip()]
+        color_count = len(slice_colors)
+        self.colors = [slice_colors[i % color_count] for i in range(len(self.prizes))]
         self.angle_per_segment = 360 / self.num_segments
         
         # Physics / Animation variables
+        pygame.mixer.init()
+        self.click_sound = pygame.mixer.Sound("click.mp3")
+        self.click_sound.set_volume(0.15)
         self.current_angle = 0
         self.speed = 0
         self.friction = 0.97  # Determines how quickly the wheel slows down
         self.is_spinning = False
         self.current_winner = None
+        self.previous_winner = None
         
         # Create GUI elements
         self.setup_ui()
@@ -76,6 +85,11 @@ class SpinningWheel:
         # Draw the multi-colored pie slices
         winning_angle = (0 - self.current_angle) % 360
         current_winner = int(winning_angle / self.angle_per_segment)
+        if self.previous_winner == None:
+            self.previous_winner = current_winner
+        elif current_winner != self.previous_winner:
+            self.previous_winner = current_winner
+            self.click_sound.play()
         angle_overflow = ((0 - self.current_angle) % self.angle_per_segment)/self.angle_per_segment
         center = None
         the_list = list(range(self.num_segments))
